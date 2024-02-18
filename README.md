@@ -11,13 +11,13 @@ individual forks.
 
 We currently require a development version of Kakoune (>= 2024-02) and Git.
 
+    git clone https://github.com/krobelus/kakoune-boost ~/.config/kak/autoload/
     kak -e '
-        source boost.kak
         map global user g %{:enter-user-mode git<ret>} -docstring git...
     '
 
-This script is idempotent; after making a change you can normally source it
-again, no need to restart the editor.
+The scripts are idempotent; after making a change you can source them again,
+no need to restart the editor.
 
 # Contributing
 

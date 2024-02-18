@@ -1,38 +1,12 @@
 remove-hooks global boost
 
 ## Clipboard
-
-# TODO Replace this.
+# TODO Replace/move this.
 declare-option str clipboard_copy_cmd wl-copy
 define-command -override clipboard-yank %{
     execute-keys -draft %{,y<a-|>"${kak_opt_clipboard_copy_cmd}" >/dev/null 2>&1<ret>}
 }
 
-## Documentation
-define-command -override doc-key -docstring "show the documentation of a key in normal mode" %{
-    # Read a single key.
-    evaluate-commands -verbatim on-key %{
-        # Switch to the documentation of keys, or open it.
-        try %{
-            buffer *doc-keys*
-        } catch %{
-            doc keys
-        }
-        # Jump to the line where this key is documented.
-        evaluate-commands execute-keys %sh{
-            kakquote() { printf %s "$*" | sed "s/'/''/g; 1s/^/'/; \$s/\$/'/"; }
-            key=$(printf %s "$kak_key" |
-            sed '
-            s/<semicolon>/;/;
-            s/-semicolon/-;/;
-            s/</<lt>/;
-            ')
-            kakquote "$(printf "/^\Q%s<ret>vv" "$key")"
-        }
-    }
-}
-
-## Git
 define-command -override git-jump -docstring %{
     If inside a diff, run git-diff-goto-source,
     Else show the Git object at cursor.
@@ -66,7 +40,7 @@ hook -group boost global WinSetOption filetype=git-(?:commit|diff|log|notes|reba
     }
 }
 
-### Git buffer stack
+## Git buffer stack
 declare-option str git_buffer
 declare-option -hidden str-list git_stack
 hook -group boost global WinDisplay \*git\* git-stack-push
@@ -115,7 +89,7 @@ define-command -override git-stack-clear -docstring "clear *git* buffers" %{
     set-option global git_stack
 }
 
-### Conflict resolution. TODO Better shortcuts?
+## Conflict resolution. TODO Better shortcuts?
 define-command -override git-conflict-use-ours -docstring "choose the first side of a conflict hunk" %{
     evaluate-commands -draft %{
         execute-keys <a-l>l<a-/>^<lt>{4}<ret>xd
@@ -131,7 +105,7 @@ define-command -override git-conflict-use-theirs -docstring "choose the second s
     }
 }
 
-### Generic Git integration
+## Generic Git integration
 define-command -override git-select-commit %{
     try %{
         execute-keys %{<a-/>^commit \S+<ret>}
@@ -242,7 +216,7 @@ define-command -override git-with-commit -params 1.. %{ evaluate-commands -draft
     boost-git %arg{@}
 }}
 
-### Git CLI wrappers
+## Git CLI wrappers
 declare-option int git_line 1
 define-command -override git-log -params .. %{
     evaluate-commands %{
@@ -305,8 +279,8 @@ define-command -override git-yank-reference %{ evaluate-commands -draft %{
     }
 }}
 
-### Third-party Git tools
-#### Tig - http://jonas.github.io/tig/
+## Third-party Git tools
+### Tig - http://jonas.github.io/tig/
 define-command -override tig -params .. %{
     terminal env "EDITOR=kak -c %val{session}" tig %arg{@}
 }
@@ -333,13 +307,13 @@ define-command -override tig-blame-selection -docstring "Run tig -L on the selec
     }
 }
 
-#### git-revise - https://github.com/mystor/git-revise
+### git-revise - https://github.com/mystor/git-revise
 define-command -override git-revise -params .. %{ git-with-commit revise %arg{@} }
 hook -group boost global BufCreate .*/git-revise-todo %{
     set-option buffer filetype git-rebase
 }
 
-#### git-autofixup - https://github.com/torbiak/git-autofixup
+### git-autofixup - https://github.com/torbiak/git-autofixup
 declare-option str git_fork_point %{
     #!/bin/sh
     upstream=@{upstream}
@@ -383,7 +357,7 @@ try %{ declare-user-mode git-revise }
 try %{ declare-user-mode git-yank }
 try %{ declare-user-mode git-stash }
 
-### User modes
+## User modes
 map global git 1 %{:git-conflict-use-ours<ret>} -docstring "conflict: use ours"
 map global git 2 %{:git-conflict-use-theirs<ret>} -docstring "conflict: use theirs"
 map global git a %{:enter-user-mode git-apply<ret>} -docstring "apply/revert/stage/unstage selection..."
