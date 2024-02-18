@@ -1,3 +1,4 @@
+
 ## Grep
 
 define-command -override boost-grep -docstring "grep and select matches with <a-s>
@@ -28,6 +29,7 @@ define-command -override boost-map-quickselect %{ evaluate-commands -save-regs '
 }}
 
 ## Locations
+remove-hooks global locations
 
 declare-option -hidden str locations_buffer
 declare-option -hidden str-list locations_stack
@@ -42,7 +44,6 @@ Capture groups must be:
 } regex locations_location_format ^\h*\K([^:\n]+):(\d+)\b(?::(\d+)\b)?(?::([^\n]+))
 
 declare-option str locations_root ''
-
 declare-option regex locations_buffer_regex \*(?:callees|callers|diagnostics|goto|find|grep|implementations|lint-output|references)\*(?:-\d+)?
 
 hook -group locations global WinDisplay %opt{locations_buffer_regex} %{
@@ -59,7 +60,7 @@ hook -group locations global GlobalSetOption 'locations_buffer=(.*)' %{
 # alias global buffers-pop locations-stack-pop
 # alias global buffer-clear locations-stack-clear
 
-define-command locations-jump %{ # from grep.kak
+define-command -override locations-jump %{ # from grep.kak
     evaluate-commands -save-regs abc %{ # use evaluate-commands to ensure jumps are collapsed
         try %{
             evaluate-commands -draft -save-regs / %{
@@ -82,14 +83,14 @@ define-command locations-jump %{ # from grep.kak
     }
 }
 
-define-command locations-next -docstring %{
+define-command -override locations-next -docstring %{
     locations-next
     Jump to next location listed in the current location list buffer, usually one of
     *diagnostics* *goto* *grep* *implementations* *lint-output* *make* *references* *symbols*
 
     %opt{locations_buffer} determines the buffer current location list buffer.
     %opt{locations_location_format} determines matching locations.
-} -buffer-completion %{
+} %{
     evaluate-commands -try-client %opt{jumpclient} -save-regs / %{
         buffer %opt{locations_buffer}
         set-register / %opt{locations_location_format}
@@ -104,14 +105,14 @@ define-command locations-next -docstring %{
     }
 }
 
-define-command locations-previous -docstring %{
+define-command -override locations-previous -docstring %{
     locations-previous
     Jump to previous location listed in the current location list buffer, usually one of
     *diagnostics* *goto* *grep* *implementations* *lint-output* *make* *references* *symbols*
 
     %opt{locations_buffer} determines the buffer current location list buffer.
     %opt{locations_location_format} determines matching locations.
-} -buffer-completion %{
+} %{
     evaluate-commands -try-client %opt{jumpclient} -save-regs / %{
         buffer %opt{locations_buffer}
         set-register / %opt{locations_location_format}
