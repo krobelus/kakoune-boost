@@ -1,11 +1,5 @@
 remove-hooks global boost
 
-## Meta stuff for hacking on this file.
-hook -group boost global BufCreate %exp{\Q%val{source}} %{
-    set-option buffer indentwidth 4
-}
-define-command -override boost -docstring "source %val{source}" %exp{ source %val{source} }
-
 ## Clipboard
 
 # TODO Replace this.
