@@ -148,7 +148,6 @@ declare-option str git_editor %{
         filename=$1
         printf %s "evaluate-commands -verbatim -client $client edit -- $* $line_and_maybe_column" |
             kak -p "$session"
-
         if $wait; then
             fifo=$(mktemp -d "${TMPDIR:-/tmp}"/kak-remote-edit.XXXXXXXX)/fifo
             mkfifo $fifo
