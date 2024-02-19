@@ -44,6 +44,9 @@ hook -group boost global WinSetOption filetype=git-(?:commit|diff|log|notes|reba
 declare-option str git_buffer
 declare-option -hidden str-list git_stack
 hook -group boost global WinDisplay \*git\* git-stack-push
+hook -group boost global BufCreate \*git\* %{
+	alias buffer buffer-pop git-stack-pop
+}
 define-command -override git-stack-push -docstring "record *git* buffer" %{
     evaluate-commands %sh{
         eval set -- $kak_quoted_opt_git_stack

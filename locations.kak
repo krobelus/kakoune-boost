@@ -56,11 +56,7 @@ hook -group locations global GlobalSetOption 'locations_buffer=(.*)' %{
     map "buffer=%opt{locations_buffer}" normal <ret> ':locations-jump<ret>'
 }
 
-# NOTE: Only relevant if other bufer-stack systems are included
-# alias global buffers-pop locations-stack-pop
-# alias global buffer-clear locations-stack-clear
-
-define-command -override locations-jump %{ # from grep.kak
+define-command -override locations-jump %{
     evaluate-commands -save-regs abc %{ # use evaluate-commands to ensure jumps are collapsed
         try %{
             evaluate-commands -draft -save-regs / %{
@@ -174,3 +170,4 @@ define-command -override locations-stack-clear -docstring "clear location list b
     set-option global locations_stack
 }
 
+alias global buffer-pop locations-stack-pop
