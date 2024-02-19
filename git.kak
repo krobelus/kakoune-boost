@@ -1,4 +1,4 @@
-remove-hooks global boost
+remove-hooks global boost-git
 
 ## Clipboard
 # TODO Replace/move this.
@@ -33,7 +33,7 @@ define-command -override git-jump -docstring %{
     }
     %reg{c}
 }}
-hook -group boost global WinSetOption filetype=git-(?:commit|diff|log|notes|rebase) %{
+hook -group boost-git global WinSetOption filetype=git-(?:commit|diff|log|notes|rebase) %{
     map buffer normal <ret> %exp{:git-jump # %val{hook_param}<ret>} -docstring 'Jump to source from git diff'
     hook -once -always window WinSetOption filetype=.* %exp{
         unmap buffer normal <ret> %%{:git-jump # %val{hook_param}<ret>}
@@ -43,8 +43,8 @@ hook -group boost global WinSetOption filetype=git-(?:commit|diff|log|notes|reba
 ## Git buffer stack
 declare-option str git_buffer
 declare-option -hidden str-list git_stack
-hook -group boost global WinDisplay \*git\* git-stack-push
-hook -group boost global BufCreate \*git\* %{
+hook -group boost-git global WinDisplay \*git\* git-stack-push
+hook -group boost-git global BufCreate \*git\* %{
 	alias buffer buffer-pop git-stack-pop
 }
 define-command -override git-stack-push -docstring "record *git* buffer" %{
@@ -312,7 +312,7 @@ define-command -override tig-blame-selection -docstring "Run tig -L on the selec
 
 ### git-revise - https://github.com/mystor/git-revise
 define-command -override git-revise -params .. %{ git-with-commit revise %arg{@} }
-hook -group boost global BufCreate .*/git-revise-todo %{
+hook -group boost-git global BufCreate .*/git-revise-todo %{
     set-option buffer filetype git-rebase
 }
 
