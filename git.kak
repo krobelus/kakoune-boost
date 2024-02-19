@@ -334,12 +334,13 @@ define-command -override git-autofixup %{
 }
 define-command -override git-autofixup-and-apply %{
     evaluate-commands %sh{
-        git-autofixup "$(sh -c "${kak_opt_git_fork_point}")" --exit-code >&2
+        fork_point=$(sh -c "${kak_opt_git_fork_point}")
+        git-autofixup "$fork_point" --exit-code >&2
         if [ $? -ge 2 ]; then {
-            echo "fail 'error running git-autofixup $(sh -c "${kak_opt_git_fork_point}")'"
+            echo "fail 'error running git-autofixup $fork_point'"
         } fi
     }
-    git -c sequence.editor=true revise -i --autosquash %sh{eval "${kak_opt_git_fork_point}"}
+    boost-git -c sequence.editor=true revise -i --autosquash %sh{eval "${kak_opt_git_fork_point}"}
 }
 
 try %{ declare-user-mode git }
