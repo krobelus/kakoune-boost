@@ -46,58 +46,6 @@ hook -group boost-git global WinSetOption filetype=git-(?:commit|diff|log|notes|
     }
 }
 
-## Git buffer stack
-declare-option str git_buffer
-declare-option -hidden str-list git_stack
-hook -group boost-git global WinDisplay \*git\* git-stack-push
-hook -group boost-git global BufCreate \*git\* %{
-    alias buffer buffer-pop git-stack-pop
-}
-define-command -override git-stack-push -docstring "record *git* buffer" %{
-    evaluate-commands %sh{
-        eval set -- $kak_quoted_opt_git_stack
-        if printf '%s\n' "$@" | grep -Fxq -- "$kak_bufname"; then {
-            exit
-        } fi
-        newbuf=$kak_bufname-$#
-        echo "try %{ delete-buffer! $newbuf }"
-        echo "rename-buffer $newbuf"
-        echo "set-option -add global git_stack %val{bufname}"
-    }
-    set-option global git_buffer %val{bufname}
-}
-define-command -override git-stack-pop -docstring "restore *git* buffer" %{
-    evaluate-commands %sh{
-        eval set -- $kak_quoted_opt_git_stack
-        if [ $# -eq 0 ]; then {
-            echo fail "git-stack-pop: no *git* buffer to pop"
-            exit
-        } fi
-        printf 'set-option global git_stack'
-        top=
-        while [ $# -ge 2 ]; do {
-            top=$1
-            printf ' %s' "$1"
-            shift
-        } done
-        echo
-        echo "delete-buffer $1"
-        echo "set-option global git_buffer '$top'"
-    }
-    try %{
-        evaluate-commands -try-client %opt{jumpclient} %{
-            buffer %opt{git_buffer}
-        }
-    }
-}
-define-command -override git-stack-clear -docstring "clear *git* buffers" %{
-    evaluate-commands %sh{
-        eval set --  $kak_quoted_opt_git_stack
-        printf 'try %%{ delete-buffer %s }\n' "$@"
-    }
-    set-option global git_stack
-}
-
 ## Conflict resolution. TODO Better shortcuts?
 define-command -override git-conflict-use-ours -docstring "choose the first side of a conflict hunk" %{
     evaluate-commands -draft %{
@@ -387,10 +335,9 @@ map global git m %{:enter-user-mode git-am<ret>} -docstring 'am...'
 map global git M %{:enter-user-mode git-merge<ret>} -docstring 'merge...'
 map global git o %{:enter-user-mode git-reset<ret>} -docstring "reset..."
 map global git p %{:enter-user-mode git-push<ret>} -docstring 'push...'
-map global git q %{:git-stack-pop<ret>} -docstring "return to previous *git* buffer"
 map global git r %{:enter-user-mode git-rebase<ret>} -docstring "rebase..."
 map global git s %{:git show<ret>} -docstring 'git show'
-map global git <tab> %{:buffer %opt{git_buffer}<ret>} -docstring "switch to most recent *git* buffer"
+map global git <tab> %{:buffer -matching \*git\b.*<ret>} -docstring "switch to most recent *git* buffer"
 map global git t %{:enter-user-mode git-revert<ret>} -docstring "revert..."
 map global git v %{:enter-user-mode git-revise<ret>} -docstring "revise..."
 map global git y %{:enter-user-mode git-yank<ret>} -docstring "yank..."
