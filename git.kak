@@ -28,7 +28,7 @@ define-command -override git-jump -docstring %{
             } catch %{
                 fail "git-jump: bad revision '%val{selection}'"
             }
-            set-register c git show %val{selection} --
+            set-register c git -push show %val{selection} --
         }
     }
     %reg{c}
@@ -38,58 +38,6 @@ hook -group boost-git global WinSetOption filetype=git-(?:commit|diff|log|notes|
     hook -once -always window WinSetOption filetype=.* %exp{
         unmap buffer normal <ret> %%{:git-jump # %val{hook_param}<ret>}
     }
-}
-
-## Git buffer stack
-declare-option str git_buffer
-declare-option -hidden str-list git_stack
-hook -group boost-git global WinDisplay \*git\* git-stack-push
-hook -group boost-git global BufCreate \*git\* %{
-	alias buffer buffer-pop git-stack-pop
-}
-define-command -override git-stack-push -docstring "record *git* buffer" %{
-    evaluate-commands %sh{
-        eval set -- $kak_quoted_opt_git_stack
-        if printf '%s\n' "$@" | grep -Fxq -- "$kak_bufname"; then {
-            exit
-        } fi
-        newbuf=$kak_bufname-$#
-        echo "try %{ delete-buffer! $newbuf }"
-        echo "rename-buffer $newbuf"
-        echo "set-option -add global git_stack %val{bufname}"
-    }
-    set-option global git_buffer %val{bufname}
-}
-define-command -override git-stack-pop -docstring "restore *git* buffer" %{
-    evaluate-commands %sh{
-        eval set -- $kak_quoted_opt_git_stack
-        if [ $# -eq 0 ]; then {
-            echo fail "git-stack-pop: no *git* buffer to pop"
-            exit
-        } fi
-        printf 'set-option global git_stack'
-        top=
-        while [ $# -ge 2 ]; do {
-            top=$1
-            printf ' %s' "$1"
-            shift
-        } done
-        echo
-        echo "delete-buffer $1"
-        echo "set-option global git_buffer '$top'"
-    }
-    try %{
-        evaluate-commands -try-client %opt{jumpclient} %{
-            buffer %opt{git_buffer}
-        }
-    }
-}
-define-command -override git-stack-clear -docstring "clear *git* buffers" %{
-    evaluate-commands %sh{
-        eval set --  $kak_quoted_opt_git_stack
-        printf 'try %%{ delete-buffer %s }\n' "$@"
-    }
-    set-option global git_stack
 }
 
 ## Conflict resolution. TODO Better shortcuts?
@@ -232,14 +180,9 @@ define-command -override git-log -params .. %{
             set-option global git_line 1
         }
     }
-    evaluate-commands -draft %{
-        try %{
-            buffer *git*
-            rename-buffer *git*.bak
-        }
-    }
-    try %{ delete-buffer *git-log* }
     git log --oneline %arg{@}
+    try %{ delete-buffer *git-log* }
+    rename-buffer *git-log*
     hook -once buffer NormalIdle .* %{
         execute-keys %opt{git_line}g<a-h>
         execute-keys -draft \
@@ -247,13 +190,6 @@ define-command -override git-log -params .. %{
         %{git diff --quiet || echo "Unstaged changes";} \
         %{git diff --quiet --cached || echo "Staged changes";} \
         <ret>
-    }
-    rename-buffer *git-log*
-    evaluate-commands -draft %{
-        try %{
-            buffer *git*.bak
-            rename-buffer *git*
-        }
     }
 }
 define-command -override git-log-default -params .. %{
@@ -377,10 +313,10 @@ map global git m %{:enter-user-mode git-am<ret>} -docstring 'am...'
 map global git M %{:enter-user-mode git-merge<ret>} -docstring 'merge...'
 map global git o %{:enter-user-mode git-reset<ret>} -docstring "reset..."
 map global git p %{:enter-user-mode git-push<ret>} -docstring 'push...'
-map global git q %{:git-stack-pop<ret>} -docstring "return to previous *git* buffer"
+map global git q %{:buffer-pop git_buffer_stack<ret>} -docstring "return to previous *git* buffer"
 map global git r %{:enter-user-mode git-rebase<ret>} -docstring "rebase..."
 map global git s %{:git show<ret>} -docstring 'git show'
-map global git <tab> %{:buffer %opt{git_buffer}<ret>} -docstring "switch to most recent *git* buffer"
+map global git <tab> %{:buffer-top git_buffer_stack<ret>} -docstring "switch to most recent *git* buffer"
 map global git t %{:enter-user-mode git-revert<ret>} -docstring "revert..."
 map global git v %{:enter-user-mode git-revise<ret>} -docstring "revise..."
 map global git y %{:enter-user-mode git-yank<ret>} -docstring "yank..."
@@ -403,7 +339,7 @@ map global git-bisect G %{:git-with-commit bisect good %{"$commit"}<ret>} -docst
 map global git-blame t %{:tig-blame<ret>} -docstring "tig: show blame at cursor line"
 map global git-blame s %{:tig-blame-selection<ret>} -docstring "tig: show commits that touched main selection"
 map global git-blame a %{:git blame<ret>} -docstring "toggle git blame annotations"
-map global git-blame b %{:git blame-jump<ret>} -docstring "jump to change that introduced line at cursor"
+map global git-blame b %{:git -push blame-jump<ret>} -docstring "jump to change that introduced line at cursor"
 
 map global git-cherry-pick a %{:boost-git cherry-pick --abort<ret>} -docstring 'abort'
 map global git-cherry-pick p %{:git-with-commit cherry-pick %{"$commit"}<ret>} -docstring 'cherry-pick selected commit'
