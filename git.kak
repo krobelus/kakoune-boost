@@ -223,10 +223,10 @@ declare-option int git_line 1
 define-command -override git-log -params .. %{
     evaluate-commands %{
         try %{
-            execute-keys -draft gkJxs 'Unstaged changes\n' | 'Staged changes\n' <ret> d
-        }
-        try %{
             buffer *git-log*
+            try %{
+                execute-keys -draft gkJxs 'Unstaged changes\n' | 'Staged changes\n' <ret> d
+            }
             set-option global git_line %val{cursor_line}
         } catch %{
             set-option global git_line 1
