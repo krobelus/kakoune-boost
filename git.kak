@@ -117,7 +117,7 @@ define-command -override git-select-commit %{
         try %{
             execute-keys <a-i>w
             evaluate-commands %sh{
-                [ "$(git rev-parse --revs-only "$kak_selection")" ] || echo fail
+                [ "$(git rev-parse --revs-only "$kak_selection" 2>/dev/null)" ] || echo fail
             }
         } catch %{
             # oneline log
