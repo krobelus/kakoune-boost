@@ -425,6 +425,7 @@ map global git-diff h %{:git diff HEAD<ret>} -docstring "show changes between HE
 map global git-diff S %{:git status<ret>} -docstring "show status"
 map global git-diff s %{:git diff --staged<ret>} -docstring "show staged changes"
 map global git-diff w %{:git diff -w<ret>} -docstring "show unstaged changes ignoring whitespace"
+map global git-diff <ret> %{:git-select-commit<ret>:git diff %reg{.}<ret>} -docstring "show changes between selected commit and working tree"
 
 map global git-fetch f %{:boost-git pull --rebase<ret>} -docstring 'pull'
 map global git-fetch a %{:boost-git fetch --all<ret>} -docstring 'fetch all'
