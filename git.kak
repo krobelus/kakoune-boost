@@ -15,6 +15,12 @@ define-command -override git-jump -docstring %{
         execute-keys -draft l[px<a-k>^diff<ret>
         set-register c git-diff-goto-source
     } catch %{
+        execute-keys -draft x<a-k> "^Staged changes$" <ret>
+        set-register c git diff --staged
+    } catch %{
+        execute-keys -draft x<a-k> "^Unstaged changes$" <ret>
+        set-register c git diff
+    } catch %{
         evaluate-commands -draft %{
             try %{
                 execute-keys <a-i>w
