@@ -51,7 +51,7 @@ declare-option str git_buffer
 declare-option -hidden str-list git_stack
 hook -group boost-git global WinDisplay \*git\* git-stack-push
 hook -group boost-git global BufCreate \*git\* %{
-	alias buffer buffer-pop git-stack-pop
+    alias buffer buffer-pop git-stack-pop
 }
 define-command -override git-stack-push -docstring "record *git* buffer" %{
     evaluate-commands %sh{
@@ -151,24 +151,28 @@ declare-option str git_editor %{
             line_and_maybe_column=$(printf %s "$1" | sed -e s,^+,, -e "s,:, ,")
             shift
         fi
-        filename=$1
-        printf %s "evaluate-commands -verbatim -client $client edit -- $* $line_and_maybe_column" |
-            kak -p "$session"
+        filename=$(realpath "$1")
+        cmd="edit -- $filename $line_and_maybe_column"
         if $wait; then
             fifo=$(mktemp -d "${TMPDIR:-/tmp}"/kak-remote-edit.XXXXXXXX)/fifo
             mkfifo $fifo
-            echo "
+            cmd="
+                $cmd
                 define-command -override -hidden git-editor-write -params .. %{
                     remove-hooks buffer remote-edit
                     write %arg{@}
                     delete-buffer
                     echo -to-file $fifo 0
                 }
-                alias %{buffer=$filename} w git-editor-write
-                evaluate-commands -verbatim hook -group remote-edit %{buffer=$filename} BufClose .* %{
+                alias buffer w git-editor-write
+                evaluate-commands -verbatim hook -group remote-edit buffer BufClose .* %{
                     echo -to-file $fifo 1
                 }
-            " | kak -p "$session"
+            "
+        fi
+        printf %s "evaluate-commands -client $client %{$cmd}" |
+            kak -p "$session"
+        if $wait; then
             read status < $fifo
             rm -r $(dirname $fifo)
             exit $status
