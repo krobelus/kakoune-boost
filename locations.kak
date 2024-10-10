@@ -2,7 +2,7 @@
 ## Grep
 
 define-command -override boost-grep -docstring "grep and select matches with <a-s>
-works best if grepcmd uses a regex flavor simlar to Kakoune's
+works best if grepcmd uses a regex flavor similar to Kakoune's
 " -params .. %{
     try %{
         evaluate-commands %sh{ [ -z "$1" ] && echo fail }
