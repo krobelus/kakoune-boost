@@ -206,14 +206,14 @@ define-command -override boost-git -params 1.. %{ evaluate-commands -draft %{ no
             response="'
             $response
             echo -debug $ ''$(escape2 "$@") <<<''
-            echo -debug ''$(escape2 "$output")>>>''
+            echo -debug -- ''$(escape2 "$output")>>>''
             '"
         } else {
             response="'
             $response
             echo -debug failed to run ''$(escape2 "$@")''
             echo -debug ''git output: <<<''
-            echo -debug ''$(escape2 "$output")>>>''
+            echo -debug -- ''$(escape2 "$output")>>>''
             hook -once buffer NormalIdle .* ''
             echo -markup ''''{Error}{\\}failed to run $(escape3 "$@"), see *debug* buffer''''
             ''
