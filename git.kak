@@ -7,6 +7,7 @@ define-command -override clipboard-yank %{
     execute-keys -draft %{,y<a-|>"${kak_opt_clipboard_copy_cmd}" >/dev/null 2>&1<ret>}
 }
 
+# Github issue #5048
 define-command -override git-jump -docstring %{
     If inside a diff, run git-diff-goto-source,
     Else show the Git object at cursor.
