@@ -1,0 +1,36 @@
+= Jujutsu integration
+
+The `:jj` command is a mostly unopinionated wrapper around the https://martinvonz.github.io/jj[jj] CLI.
+
+You can migrate from Git incrementally by running `jj git init --colocate`
+and take it from there.
+
+For now, the `--color=always` option is always passed to `jj` if the
+https://github.com/eraserhd/kak-ansi[kak-ansi] plugin is installed.
+
+== jj describe
+
+Unlike `:git commit`, this command will keep its buffer open after writing.
+This is because Jujutsu revisions have a Change ID, which is maintained
+across rewrites, so it is valid to use the same buffer twice. To-do: we
+should use a deterministic buffer name, and refresh the buffer when the
+description changes externally.
+
+== jj split             
+
+This command splits selected changes in the given revision into a new revision,
+which is inserted before the split target.
+
+Unlike the CLI version, `:jj split` does not launch an interactive program
+to select diff hunks.  Instead it uses only the selected lines, or for
+selections that don't contain a newline, the diff hunk around the selection.
+See also the `:patch` and `:git apply` commands.
+
+As of today, `:jj split`
+
+* requires `git` to be installed.
+* only works inside unified diff buffers, as created by `git show` or `jj
+  show --git`.  In future, it should also work with Jujutsu's diff format
+  (`jj show`) and inside tracked files, like `:git apply` does.
+* does not prompt for a new description but simply duplicates the existing
+  one. This might be changed in future.
