@@ -2,6 +2,13 @@
 
 declare-option -hidden str jj_source %val{source}
 
+hook global WinSetOption filetype=jj-diff %{
+    map buffer normal <ret> %{:git-diff-goto-source<ret>} -docstring 'Jump to source from git diff'
+    hook -once -always -first window WinSetOption filetype=.* %{
+        unmap buffer normal <ret> %{:git-diff-goto-source<ret>}
+    }
+}
+
 define-command -override jj -params 1.. \
     -docstring %{
         jj [<arguments>]: Jujutsu wrapper
