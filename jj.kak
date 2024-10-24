@@ -5,6 +5,7 @@ declare-option -hidden str jj_source %val{source}
 hook global WinSetOption filetype=jj-diff %{
     map buffer normal <ret> %{:git-diff-goto-source<ret>} -docstring 'Jump to source from git diff'
     hook -once -always -first window WinSetOption filetype=.* %{
+        # TODO this only works in colocated repos
         unmap buffer normal <ret> %{:git-diff-goto-source<ret>}
     }
 }
@@ -35,8 +36,18 @@ define-command -override jj -params 1.. \
             printf "%s" "$1" | sed "s/'/''/g; 1s/^/'/; \$s/\$/'/"
         }
 
+        trace() {
+            # Tracing output.
+            printf 'echo -debug $ jj'
+            for arg; do
+                printf ' %s' "$(kakquote "$arg")"
+            done
+            printf '\n'
+        }
+
         generic_jj() {
-            if ! output=$(jj "$@" 2>&1); then {
+            trace "$@"
+            if ! output=$(JJ_EDITOR=true jj "$@" 2>&1); then {
                 printf %s "fail failed to run jj $1, see the *debug* buffer"
                 exec >&2
                 printf '$ jj'
@@ -47,45 +58,69 @@ define-command -override jj -params 1.. \
                 done
                 printf '\n'
                 printf '%s\n' "$output"
-                exit
             } fi
+            exit
         }
 
+        # TODO handle errors
         show_jj_cmd_output() {
             output=$(mktemp -d "${TMPDIR:-/tmp}"/kak-jj.XXXXXXXX)/fifo
             mkfifo ${output}
             color=
-            render=
+            render_ansi=
             if [ -n "$kak_opt_ansi_filter" ]; then
                 color=--color=always
-                render=ansi-render
+                render_ansi=ansi-enable
             fi
+            trace "$@"
             ( trap - INT QUIT; jj $color "$@" > ${output} 2>&1 & ) > /dev/null 2>&1 < /dev/null
-
             printf %s "evaluate-commands -try-client '$kak_opt_docsclient' '
                       edit! -fifo ${output} *jj*
+                      $render_ansi
                       set-option buffer filetype ${filetype}
                       hook -always -once buffer BufCloseFifo .* ''
                           nop %sh{ rm -r $(dirname ${output}) }
-                          $render
                       ''
             '"
         }
 
+        with_revision_around_cursor() {
+            revision=$(revision_around_cursor)
+            generic_jj "$@" $revision
+        }
+        with_dash_revision_around_cursor() {
+            revision=$(revision_around_cursor)
+            generic_jj "$@" ${revision:+"--revision=${revision}"}
+        }
+        with_dash_revisions_around_cursor() {
+            revision=$(revision_around_cursor)
+            generic_jj "$@" ${revision:+"--revisions=${revision}"}
+        }
+        with_selected_revisions() {
+            selected_revisions=$(printf %s "${kak_selection}" | awk '/^(?:│ )*[@◆○x]\s+[a-z]+/ { print $2 }')
+            generic_jj "$@" $(for revision in $selected_revisions; do printf ' -r %s' $revision; done) "$@"
+        }
+
+        revision_around_cursor() {
+            echo >${kak_command_fifo} "jj-revision-around-cursor ${kak_response_fifo}"
+            cat ${kak_response_fifo}
+        }
+
         jj_describe() {
+            revision=$(revision_around_cursor)
             msgfile=$(mktemp "${TMPDIR:-/tmp}"/kak-jj-describe.XXXXXXXX)
-            JJ_EDITOR=cat jj describe "$@" >"$msgfile" 2>/dev/null
+            JJ_EDITOR=cat jj describe $revision "$@" >"$msgfile" 2>/dev/null
             printf %s "edit $msgfile
                 set-option buffer filetype jj-describe
                 hook buffer BufWritePost .* %{ evaluate-commands %sh{
-                    jj describe $* --message \"\$(grep -v ^JJ $msgfile)\"
+                    jj describe $revision $* --message \"\$(grep -v ^JJ $msgfile)\"
                 } }
                 hook buffer BufClose .* %{ nop %sh{ rm -f $msgfile } }
                 "
         }
 
         jj_diff() {
-            filetype=jj-diff
+            filetype=git-diff
             show_jj_cmd_output diff "$@"
         }
 
@@ -95,8 +130,9 @@ define-command -override jj -params 1.. \
         }
 
         jj_show() {
-            filetype=jj-diff
-            show_jj_cmd_output show "$@"
+            filetype=git-diff
+            revision=$(revision_around_cursor)
+            show_jj_cmd_output show $revision "$@"
         }
 
         jj_split() {
@@ -123,17 +159,18 @@ define-command -override jj -params 1.. \
         cmd=$1
         shift
         case "$cmd" in
-            (abandon) generic_jj abandon "$@" ;;
-            (backout) generic_jj backout "$@" ;;
+            (abandon) with_revision_around_cursor abandon "$@" ;;
+            (backout) with_dash_revisions_around_cursor backout "$@" ;;
+            (bookmark) generic_jj bookmark "$@" ;;
             (describe) jj_describe "$@" ;;
             (diff) jj_diff "$@" ;;
-            (edit) generic_jj edit "$@" ;;
+            (edit) with_revision_around_cursor edit "$@" ;;
             (log) jj_log "$@" ;;
             (new) generic_jj new "$@" ;;
-            (parallelize) generic_jj parallelize "$@" ;;
-            (rebase) generic_jj rebase "$@" ;;
+            (parallelize) with_selected_revisions parallelize "$@" ;;
+            (rebase) with_dash_revisions_around_cursor rebase "$@" ;;
             (show) jj_show "$@" ;;
-            (squash) generic_jj squash "$@" ;;
+            (squash) with_dash_revision_around_cursor squash "$@" ;;
             (split) jj_split "$@" ;;
             (undo) generic_jj undo "$@" ;;
             (*) printf "fail unknown jj command '%s'\n" "$cmd"
@@ -156,4 +193,20 @@ complete-command jj shell-script-candidates %{
         squash \
         split \
         undo \
+}
+
+define-command -override jj-revision-around-cursor -params 1 %{
+    evaluate-commands -draft %{
+        try %{
+            execute-keys %{<a-/>^(?:commit|Change ID:) \S+<ret>}
+            execute-keys %{1s^(?:commit|Change ID:) (\S+)<ret>}
+            echo -to-file %arg{1} %val{selection}
+        } catch %{
+            execute-keys %{<a-l><semicolon><a-/>^(?:│ )*[@◆○×]\s+[a-z]+<ret>}
+            execute-keys %{1s^(?:│ )*[@◆○×]\s+([a-z]+)<ret>}
+            echo -to-file %arg{1} %val{selection}
+        } catch %{
+            echo -to-file %arg{1}
+        }
+    }
 }
