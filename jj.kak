@@ -38,7 +38,7 @@ define-command -override jj -params 1.. \
 
         trace() {
             # Tracing output.
-            printf 'echo -debug $ jj'
+            printf 'echo -debug -- $ jj'
             for arg; do
                 printf ' %s' "$(kakquote "$arg")"
             done
@@ -84,36 +84,59 @@ define-command -override jj -params 1.. \
             '"
         }
 
-        with_revision_around_cursor() {
-            revision=$(revision_around_cursor)
-            generic_jj "$@" $revision
+        with_revisions_around_cursor() {
+            revisions=$(revisions_around_cursor)
+            generic_jj "$@" $revisions
         }
         with_dash_revision_around_cursor() {
-            revision=$(revision_around_cursor)
+            revision=
+            if ! printf '%s\n' "$@" | grep -qE '^(-r|--revisions)'; then
+                if [ "$1" = squash ]; then
+                    from=$(printf '%s\n' "$@" | grep -oE '^--from')
+                    into=$(printf '%s\n' "$@" | grep -oE '^--into')
+                    case ${from}${into} in
+                        ( --from )
+                            revision=$(revisions_around_cursor)
+                            generic_jj "$@" ${revision:+"--into=${revision}"}
+                            return
+                            ;;
+                        ( --into )
+                            revision=$(revisions_around_cursor)
+                            generic_jj "$@" ${revision:+"--from=${revision}"}
+                            return
+                            ;;
+                    esac
+                fi
+                revision=$(revisions_around_cursor)
+            fi
             generic_jj "$@" ${revision:+"--revision=${revision}"}
         }
         with_dash_revisions_around_cursor() {
-            revision=$(revision_around_cursor)
-            generic_jj "$@" ${revision:+"--revisions=${revision}"}
+            revisions=
+            if ! printf '%s\n' "$@" | grep -qE '^(-r|--revisions)'; then
+                revisions=$(revisions_around_cursor)
+            fi
+            generic_jj "$@" ${revisions:+"--revisions=$(printf %s\\n ${revisions} | paste -d '|' -s)"}
         }
+        # TODO remove
         with_selected_revisions() {
             selected_revisions=$(printf %s "${kak_selection}" | awk '/^(?:│ )*[@◆○x]\s+[a-z]+/ { print $2 }')
             generic_jj "$@" $(for revision in $selected_revisions; do printf ' -r %s' $revision; done) "$@"
         }
 
-        revision_around_cursor() {
-            echo >${kak_command_fifo} "jj-revision-around-cursor ${kak_response_fifo}"
+        revisions_around_cursor() {
+            echo >${kak_command_fifo} "jj-revisions-around-cursor ${kak_response_fifo}"
             cat ${kak_response_fifo}
         }
 
         jj_describe() {
-            revision=$(revision_around_cursor)
+            revision=$(revisions_around_cursor)
             msgfile=$(mktemp "${TMPDIR:-/tmp}"/kak-jj-describe.XXXXXXXX)
             JJ_EDITOR=cat jj describe $revision "$@" >"$msgfile" 2>/dev/null
             printf %s "edit $msgfile
                 set-option buffer filetype jj-describe
                 hook buffer BufWritePost .* %{ evaluate-commands %sh{
-                    jj describe $revision $* --message \"\$(grep -v ^JJ $msgfile)\"
+                    jj describe $revision $* --message=\"\$(grep -v ^JJ $msgfile)\"
                 } }
                 hook buffer BufClose .* %{ nop %sh{ rm -f $msgfile } }
                 "
@@ -131,7 +154,7 @@ define-command -override jj -params 1.. \
 
         jj_show() {
             filetype=git-diff
-            revision=$(revision_around_cursor)
+            revision=$(revisions_around_cursor)
             show_jj_cmd_output show $revision "$@"
         }
 
@@ -159,12 +182,12 @@ define-command -override jj -params 1.. \
         cmd=$1
         shift
         case "$cmd" in
-            (abandon) with_revision_around_cursor abandon "$@" ;;
+            (abandon) with_revisions_around_cursor abandon "$@" ;;
             (backout) with_dash_revisions_around_cursor backout "$@" ;;
             (bookmark) generic_jj bookmark "$@" ;;
             (describe) jj_describe "$@" ;;
             (diff) jj_diff "$@" ;;
-            (edit) with_revision_around_cursor edit "$@" ;;
+            (edit) with_revisions_around_cursor edit "$@" ;;
             (log) jj_log "$@" ;;
             (new) generic_jj new "$@" ;;
             (parallelize) with_selected_revisions parallelize "$@" ;;
@@ -195,16 +218,16 @@ complete-command jj shell-script-candidates %{
         undo \
 }
 
-define-command -override jj-revision-around-cursor -params 1 %{
+define-command -override jj-revisions-around-cursor -params 1 %{
     evaluate-commands -draft %{
         try %{
             execute-keys %{<a-/>^(?:commit|Change ID:) \S+<ret>}
             execute-keys %{1s^(?:commit|Change ID:) (\S+)<ret>}
             echo -to-file %arg{1} %val{selection}
         } catch %{
-            execute-keys %{<a-l><semicolon><a-/>^(?:│ )*[@◆○×]\s+[a-z]+<ret>}
+            execute-keys %{<a-s><a-l><semicolon><a-/>^(?:│ )*[@◆○×]\s+[a-z]+<ret>}
             execute-keys %{1s^(?:│ )*[@◆○×]\s+([a-z]+)<ret>}
-            echo -to-file %arg{1} %val{selection}
+            echo -to-file %arg{1} %val{selections}
         } catch %{
             echo -to-file %arg{1}
         }
