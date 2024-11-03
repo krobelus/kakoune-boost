@@ -16,7 +16,7 @@ across rewrites, so it is valid to use the same buffer twice. To-do: we
 should use a deterministic buffer name, and refresh the buffer when the
 description changes externally.
 
-== jj split             
+== jj split
 
 This command splits selected changes in the given revision into a new revision,
 which is inserted before the split target.
