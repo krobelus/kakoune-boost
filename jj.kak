@@ -134,7 +134,7 @@ define-command -override jj -params 1.. \
             filetype=git-diff
             revision=$(revisions_around_cursor)
             # Don't pass revision if given as arg.
-            if ! jj show $revision "$@" >dev/null 2>&1; then
+            if ! jj show $revision "$@" >/dev/null 2>&1; then
                 revision=
             fi
             show_jj_cmd_output show $revision "$@"
