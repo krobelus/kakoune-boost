@@ -69,7 +69,12 @@ define-command -override jj -params 1.. \
             render_ansi=
             if [ -n "$kak_opt_ansi_filter" ]; then
                 color=--color=always
-                render_ansi=ansi-enable
+                render_ansi='
+                    ansi-enable
+                    hook -once buffer BufReadFifo .* %exp{
+                        execute-keys -client %val{client} gk
+                    }
+                '
             fi
             trace "$@"
             ( trap - INT QUIT; jj $color "$@" > ${output} 2>&1 & ) > /dev/null 2>&1 < /dev/null
