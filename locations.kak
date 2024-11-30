@@ -9,9 +9,7 @@ works best if grepcmd uses a regex flavor similar to Kakoune's
         grep %arg{@}
     } catch %{
         execute-keys -save-regs '' *
-        evaluate-commands -save-regs l %{
-            evaluate-commands -verbatim grep -- %sh{ printf %s "$kak_main_reg_slash" }
-        }
+        grep -- %sh{ printf %s "$kak_main_reg_slash" }
     }
     boost-map-quickselect
 }
