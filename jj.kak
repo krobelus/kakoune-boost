@@ -247,8 +247,8 @@ define-command -override jj-revisions-around-cursor -params 1 %{
             execute-keys %{1s^(?:commit|Change ID:) (\S+)<ret>}
             echo -to-file %arg{1} %val{selection}
         } catch %{
-            execute-keys %{<a-s><a-l><semicolon><a-/>^\h*(?:│ )*[@◆○×](?: │)*\s+[a-z]+<ret>}
-            execute-keys %{1s^\h*(?:│ )*[@◆○×](?: │)*\s+([a-z]+)<ret>}
+            execute-keys %{<a-s><a-l><semicolon><a-/>^\h*(?:│ )*[@◆○×](?:\h*│)*\b[a-z]+<ret>}
+            execute-keys %{1s^\h*(?:│ )*[@◆○×](?:\h*│)*\b([a-z]+)<ret>}
             echo -to-file %arg{1} %val{selections}
         } catch %{
             echo -to-file %arg{1}
