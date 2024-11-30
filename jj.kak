@@ -30,6 +30,7 @@ define-command -override jj -params 1.. \
             show
             squash
             split       - split the selected lines into a separate commit
+            status
             undo
     } %{ evaluate-commands %sh{
         kakquote() {
@@ -135,6 +136,11 @@ define-command -override jj -params 1.. \
             show_jj_cmd_output log "$@"
         }
 
+        jj_status() {
+            filetype=git-status
+            show_jj_cmd_output status "$@"
+        }
+
         jj_show() {
             filetype=git-diff
             revision=$(revisions_around_cursor)
@@ -209,6 +215,7 @@ define-command -override jj -params 1.. \
             (show) jj_show "$@" ;;
             (squash) jj_squash "$@" ;;
             (split) jj_split "$@" ;;
+            (status) jj_status "$@" ;;
             (undo) generic_jj undo "$@" ;;
             (*) printf "fail unknown jj command '%s'\n" "$cmd"
         esac
@@ -229,6 +236,7 @@ complete-command jj shell-script-candidates %{
         show \
         squash \
         split \
+        status \
         undo \
 }
 
