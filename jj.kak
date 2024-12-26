@@ -191,21 +191,35 @@ define-command -override jj -params 1.. \
             echo >${kak_command_fifo} "
                 evaluate-commands -draft %{
                     try %{
-                        execute-keys %{<a-/>^(?:commit|Commit ID:) \S+<ret>}
-                        execute-keys %{1s^(?:commit|Commit ID:) (\S+)<ret>}
+                        execute-keys %{<a-/>^(?:commit|Change ID:) \S+<ret>}
+                        execute-keys %{1s^(?:commit|Change ID:) (\S+)<ret>}
                         echo -to-file ${kak_response_fifo} -- %exp{--revision=%val{selection}}
                     } catch %{
                         echo -to-file ${kak_response_fifo}
                     }
                 }
             "
-            commit=$(cat ${kak_response_fifo})
+            revision=$(cat ${kak_response_fifo})
             echo "require-module patch"
             printf %s "patch JJ_EDITOR=true \
-                jj split $commit --tool=${kak_opt_jj_source%/*}/jj-split-tool"
+                jj split $revision --tool=${kak_opt_jj_source%/*}/jj-split-tool"
             if [ $# -ge 2 ]; then
                 printf ' %%arg{%s}' $(seq 2 $#)
             fi
+            echo
+            if [ -n "$revision" ] && ! printf '%s\n' "$@" | grep -qE '^(-p|--parallel\b)'; then {
+                revision=${revision#--revision=}
+                echo "evaluate-commands -draft -save-regs | %{
+                    try %{
+                        execute-keys %{<a-/>^Change ID: \S+<ret>}
+                        execute-keys %{1s^Change ID: (\S+)<ret>}
+                        set-register | %{
+                            jj log --no-graph --ignore-working-copy -r ${revision}+ -T change_id
+                        }
+                        execute-keys |<ret>
+                    }
+                }"
+            } fi
         }
 
         cmd=$1
