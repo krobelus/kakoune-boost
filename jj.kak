@@ -19,6 +19,7 @@ define-command -override jj -params 1.. \
 
         Available commands:
             abandon
+            absorb
             backout
             describe
             diff        - compare file contents between two revisions
@@ -203,6 +204,7 @@ define-command -override jj -params 1.. \
         shift
         case "$cmd" in
             (abandon) with_revisions_around_cursor abandon "$@" ;;
+            (absorb) generic_jj absorb "$@" ;;
             (backout) with_dash_revisions_around_cursor backout "$@" ;;
             (bookmark) generic_jj bookmark "$@" ;;
             (describe) jj_describe "$@" ;;
