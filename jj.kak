@@ -153,16 +153,16 @@ define-command -override jj -params 1.. \
 
         jj_squash() {
             if ! printf '%s\n' "$@" | grep -qE '^(-r|--revisions)'; then
-                from=$(printf '%s\n' "$@" | grep -oE '^--from')
-                into=$(printf '%s\n' "$@" | grep -oE '^--into')
+                from=$(printf '%s\n' "$@" | grep -oE '^(--from|-f)')
+                into=$(printf '%s\n' "$@" | grep -oE '^(--into|-t)')
                 revisions=$(revisions_around_cursor)
                 joined_revisions=${revisions:+"$(printf %s\\n ${revisions} | paste -d '|' -s)"}
                 case ${from}${into} in
-                    ( --from )
+                    ( --from | -f )
                         generic_jj squash "$@" ${revisions:+"--into=${joined_revisions}"}
                         return
                         ;;
-                    ( --into )
+                    ( --into | -t )
                         generic_jj squash "$@" ${revisions:+"--from=${joined_revisions}"}
                         return
                         ;;
