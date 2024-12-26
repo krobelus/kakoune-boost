@@ -134,6 +134,14 @@ define-command -override jj -params 1.. \
 
         jj_log() {
             filetype=jj-log
+            echo "
+                hook -once global BufCloseFifo .* %{
+                    execute-keys -client ${kak_client} %{/@ <ret>}
+                    hook -once buffer NormalIdle .* %{
+                        execute-keys -client ${kak_client} vv
+                    }
+                }
+            "
             show_jj_cmd_output log "$@"
         }
 
