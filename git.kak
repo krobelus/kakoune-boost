@@ -4,7 +4,10 @@ remove-hooks global boost-git
 # TODO Replace/move this.
 declare-option str clipboard_copy_cmd wl-copy
 define-command -override clipboard-yank %{
-    execute-keys -draft %{,y<a-|>"${kak_opt_clipboard_copy_cmd}" >/dev/null 2>&1<ret>}
+    evaluate-commands -save-regs t %{
+        set-register t %val{client_env_SSH_TTY}
+        execute-keys -draft %{,y<a-|>SSH_TTY=${kak_reg_t} ${kak_opt_clipboard_copy_cmd} >/dev/null 2>&1<ret>}
+    }
 }
 
 # Github issue #5048
@@ -223,22 +226,32 @@ define-command -override git-fixup %{ evaluate-commands -draft %{
     git-select-commit
     git commit --fixup %val{selection}
 }}
-define-command -override git-yank -params 1 %{ evaluate-commands -draft %{
-    git-select-commit
-    evaluate-commands %sh{
-        x=$(git log -1 "${kak_selection}" --format="$1")
-        printf %s "set-register dquote '$(printf %s "$x" | sed "s/'/''/g")'"
-        printf %s "$x" | "${kak_opt_clipboard_copy_cmd}" >/dev/null 2>&1
+define-command -override git-yank -params 1 %{
+    evaluate-commands -save-regs t %{
+        set-register t %val{client_env_SSH_TTY}
+        evaluate-commands -draft %{
+            git-select-commit
+            evaluate-commands %sh{
+                x=$(git log -1 "${kak_selection}" --format="$1")
+                printf %s "set-register dquote '$(printf %s "$x" | sed "s/'/''/g")'"
+                printf %s "$x" | SSH_TTY=${kak_reg_t} "${kak_opt_clipboard_copy_cmd}" >/dev/null 2>&1
+            }
+        }
     }
-}}
-define-command -override git-yank-reference %{ evaluate-commands -draft %{
-    git-select-commit
-    evaluate-commands %sh{
-        x=$(git log -1 "${kak_selection}" --pretty=reference)
-        printf %s "set-register dquote '$(printf %s "$x" | sed "s/'/''/g")'"
-        printf %s "$x" | "${kak_opt_clipboard_copy_cmd}" >/dev/null 2>&1
+}
+define-command -override git-yank-reference %{
+    evaluate-commands -save-regs t %{
+        set-register t %val{client_env_SSH_TTY}
+        evaluate-commands -draft %{
+            git-select-commit
+            evaluate-commands %sh{
+                x=$(git log -1 "${kak_selection}" --pretty=reference)
+                printf %s "set-register dquote '$(printf %s "$x" | sed "s/'/''/g")'"
+                printf %s "$x" | SSH_TTY=${kak_reg_t} "${kak_opt_clipboard_copy_cmd}" >/dev/null 2>&1
+            }
+        }
     }
-}}
+}
 
 ## Third-party Git tools
 ### Tig - http://jonas.github.io/tig/
