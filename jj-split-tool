@@ -1,7 +1,0 @@
-#!/bin/sh
-set -eu
-left=$1
-right=$2
-git -C "$left" apply
-rm -rf "$right"
-mv "$left" "$right"
