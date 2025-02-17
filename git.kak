@@ -54,14 +54,14 @@ hook -group boost-git global WinSetOption filetype=git-(?:commit|diff|log|notes|
 define-command -override git-conflict-use-ours -docstring "choose the first side of a conflict hunk" %{
     evaluate-commands -draft %{
         execute-keys <a-l>l<a-/>^<lt>{4}<ret>xd
-        execute-keys h/^={4}|^\|{4}|^%{4}<ret>
+        execute-keys h/^(={4}|\|{4}|%{4}|\+{4})<ret>
         execute-keys ?^>{4}<ret>xd
     }
 }
 define-command -override git-conflict-use-theirs -docstring "choose the second side of a conflict hunk" %{
     evaluate-commands -draft %{
         execute-keys <a-l>l<a-/>^<lt>{4}<ret>
-        execute-keys ?^={4}|^\+{4}<ret>xd
+        execute-keys ?^(={4}|\+{4}|%{4})<ret>xd
         execute-keys />{4}<ret>xd
     }
 }
