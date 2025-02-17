@@ -99,6 +99,7 @@ declare-option str git_editor %{
         do
             shift
         done
+        line_and_maybe_column=
         if printf %s "$1" | grep -q ^+; then
             line_and_maybe_column=$(printf %s "$1" | sed -e s,^+,, -e "s,:, ,")
             shift
