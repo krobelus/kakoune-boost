@@ -66,6 +66,16 @@ define-command -override git-conflict-use-theirs -docstring "choose the second s
     }
 }
 
+define-command -override git-conflicts %{
+    evaluate-commands %sh{
+        if git ls-files -d | grep -qF .jj-do-not-resolve-this-conflict; then
+            echo "grep <<<<<<< ."
+        else
+            echo "grep <<<<<<< $(git ls-files -u | cut -f2 | sort -u)"
+        fi
+    }
+} -docstring "find all conflicts"
+
 ## Generic Git integration
 define-command -override git-select-commit %{
     try %{
@@ -399,7 +409,7 @@ map global git-diff u %{:git status<ret>} -docstring "show status"
 map global git-diff s %{:git diff --staged<ret>} -docstring "show staged changes"
 map global git-diff w %{:git diff -w<ret>} -docstring "show unstaged changes ignoring whitespace"
 map global git-diff <ret> %{:git-select-commit<ret>:git diff %reg{.}<ret>} -docstring "show changes between selected commit and working tree"
-map global git-diff c %{:eval "grep ^<lt><lt><lt><lt><lt><lt><lt> %sh{git ls-files -u | cut -f2 | sort -u | xargs}"<ret>} -docstring "find all conflicts"
+map global git-diff c %{:git-conflicts<ret>} -docstring "find all conflicts"
 
 map global git-fetch f %{:boost-git pull --rebase<ret>} -docstring 'pull'
 map global git-fetch a %{:boost-git fetch --all<ret>} -docstring 'fetch all'
