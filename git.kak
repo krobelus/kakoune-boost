@@ -69,9 +69,9 @@ define-command -override git-conflict-use-theirs -docstring "choose the second s
 define-command -override git-conflicts %{
     evaluate-commands %sh{
         if git ls-files -d | grep -qF .jj-do-not-resolve-this-conflict; then
-            echo "grep <<<<<<< ."
+            echo "grep ^<<<<<<< ."
         else
-            echo "grep <<<<<<< $(git ls-files -u | cut -f2 | sort -u)"
+            echo "grep ^<<<<<<< $(git ls-files -u | cut -f2 | sort -u)"
         fi
     }
 } -docstring "find all conflicts"
