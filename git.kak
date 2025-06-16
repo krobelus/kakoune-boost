@@ -81,8 +81,8 @@ define-command -override git-conflicts %{
 ## Generic Git integration
 define-command -override git-select-commit %{
     try %{
-        execute-keys %{<a-/>^commit \S+<ret>}
-        execute-keys %{1s^commit (\S+)<ret>}
+        execute-keys %{<a-/>^(?:commit|Commit ID:) \S+<ret>}
+        execute-keys %{1s^(?:commit|Commit ID:) (\S+)<ret>}
     } catch %{
         try %{
             execute-keys <a-i>w
