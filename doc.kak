@@ -16,7 +16,7 @@ define-command -override doc-key -docstring "show the documentation of a key in 
             s/-semicolon/-;/;
             s/</<lt>/;
             ')
-            kakquote "$(printf "/^\Q%s<ret>vv" "$key")"
+            kakquote "$(printf "/^(\S*, )*\Q%s<ret>vv" "$key")"
         }
     }
 }
