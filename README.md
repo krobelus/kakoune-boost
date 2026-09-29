@@ -22,4 +22,4 @@ no need to restart the editor.
 # Contributing
 
 Send feedback and patches to [~krobelus/kakoune@lists.sr.ht](mailto:~krobelus/kakoune@lists.sr.ht) (see
-[public archives](https://lists.sr.ht/~krobelus/kakoune)) or use GitHub or IM.
+[public archives](https://lists.sr.ht/~krobelus/kakoune)) or use GitHub.
